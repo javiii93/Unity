@@ -7,7 +7,7 @@ public class PlayerStateListener : MonoBehaviour
     public GameObject playerRespawnPoint = null;
     private Animator playerAnimator = null;
     private bool right = false;
-    private bool playerHasLanded = true;
+    public bool playerHasLanded = true;
     private Rigidbody2D rb2D;
     private PlayerStateController.playerStates previousState =
 PlayerStateController.playerStates.idle;
@@ -81,6 +81,7 @@ PlayerStateController.playerStates.idle;
             case PlayerStateController.playerStates.jump:
                 break;
             case PlayerStateController.playerStates.landing:
+               
                 break;
             case PlayerStateController.playerStates.falling:
                 break;
@@ -123,6 +124,7 @@ PlayerStateController.playerStates.idle;
                 playerAnimator.SetBool("Walking", true);
                 break;
             case PlayerStateController.playerStates.jump:
+                Debug.Log("landing = "+playerHasLanded);
                 if (playerHasLanded)
                 {
                     if (right)
@@ -141,11 +143,15 @@ PlayerStateController.playerStates.idle;
                             rb2D.AddForce(new Vector2(playerJumpStrongY, playerJumpStrongX));
                         }
                     }
-                    playerHasLanded = false;
+                  
                 }
+                playerHasLanded = false;
+                Debug.Log("landing = " + playerHasLanded);
                 break;
             case PlayerStateController.playerStates.landing:
+               // Debug.Log("Landed " + playerHasLanded);
                 playerHasLanded = true;
+              //  Debug.Log("Landed " + playerHasLanded);
                 break;
             case PlayerStateController.playerStates.falling:
                 break;
@@ -263,4 +269,5 @@ PlayerStateController.playerStates.idle;
         // Retornar True vol dir 'Abort'. Retornar False vol dir 'Continue'.
         return returnVal;
     }
+   
 }

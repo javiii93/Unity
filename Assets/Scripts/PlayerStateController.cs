@@ -45,16 +45,17 @@ public class PlayerStateController : MonoBehaviour
             if (onStateChange != null) onStateChange(PlayerStateController.
              playerStates.idle);
         }
-        {
-            if (salto != 0f)
-                //Debug.Log("Jump " + salto);
-            {
-                if (onStateChange != null) onStateChange(PlayerStateController.
-                 playerStates.jump);
-                salto = 0;
-            }
 
+        if (salto != 0f)
+        //Debug.Log("Jump " + salto);
+        {
+            if (onStateChange != null) onStateChange(PlayerStateController.
+             playerStates.jump);
+            salto = 0;
         }
+
+
+
     }
 
 }

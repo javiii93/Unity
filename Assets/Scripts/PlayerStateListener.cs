@@ -3,17 +3,22 @@ using System.Collections;
 [RequireComponent(typeof(Animator))]
 public class PlayerStateListener : MonoBehaviour
 {
-    public float playerWalkSpeed = 3f, playerJumpStrongY = 100f, playerJumpStrongX = 100f;
+    public float playerWalkSpeed = 3f, playerJumpStrongY = 500f, playerJumpStrongX = 1000f;
     public GameObject playerRespawnPoint = null;
+    public Transform bulletSpawnTransform;
     private Animator playerAnimator = null;
-    private bool right = false;
+    private bool right = true;
+   // private int maximoDeSaltos=2 , saltosActuales=0 ;
     public bool playerHasLanded = true;
     private Rigidbody2D rb2D;
+    public GameObject bulletPrefab = null;
+    public GameObject bulletPrefab2 = null;
     private PlayerStateController.playerStates previousState =
 PlayerStateController.playerStates.idle;
+   
     private PlayerStateController.playerStates currentState =
     PlayerStateController.playerStates.idle;
-
+    
     void OnEnable()
     {
         PlayerStateController.onStateChange += onStateChange;
@@ -26,6 +31,9 @@ PlayerStateController.playerStates.idle;
     void Start()
     {
         playerAnimator = GetComponent<Animator>();
+        PlayerStateController.stateDelayTimer[(int)PlayerStateController.playerStates.firingWeapon] = 0.0f;
+        PlayerStateController.stateDelayTimer[(int)PlayerStateController.playerStates.firingWeapon2] = 0.0f;
+
 
     }
     void LateUpdate()
@@ -124,18 +132,23 @@ PlayerStateController.playerStates.idle;
                 playerAnimator.SetBool("Walking", true);
                 break;
             case PlayerStateController.playerStates.jump:
-                Debug.Log("landing = "+playerHasLanded);
+
                 if (playerHasLanded)
                 {
                     if (right)
                     {
+                        if (playerJumpStrongY < 0)
+                        {
+                            playerJumpStrongY = playerJumpStrongY * -1f;
+                        }
                         rb2D.AddForce(new Vector2(playerJumpStrongY, playerJumpStrongX));
                     }
-                    else if (!right)
+                    else 
                     {
                         if (playerJumpStrongY < 0)
                         {
                             rb2D.AddForce(new Vector2(playerJumpStrongY, playerJumpStrongX));
+
                         }
                         else
                         {
@@ -143,8 +156,8 @@ PlayerStateController.playerStates.idle;
                             rb2D.AddForce(new Vector2(playerJumpStrongY, playerJumpStrongX));
                         }
                     }
-                  
                 }
+                
                 playerHasLanded = false;
                 Debug.Log("landing = " + playerHasLanded);
                 break;
@@ -164,6 +177,25 @@ PlayerStateController.playerStates.idle;
                 rb2D.velocity = Vector2.zero;
 
                 break;
+            case PlayerStateController.playerStates.firingWeapon:
+                PlayerStateController.stateDelayTimer[(int)PlayerStateController.playerStates.firingWeapon] = Time.time + 0.25f;
+                GameObject newBullet = (GameObject)Instantiate(bulletPrefab);
+                newBullet.transform.position = bulletSpawnTransform.position;
+                PlayerBulletController bullCon = newBullet.GetComponent<PlayerBulletController>();
+                bullCon.playerObject = gameObject;
+                bullCon.launchBullet();
+                onStateChange(currentState);
+                break;
+              
+            case PlayerStateController.playerStates.firingWeapon2:
+                PlayerStateController.stateDelayTimer[(int)PlayerStateController.playerStates.firingWeapon2] = Time.time + 0.25f;
+                GameObject newBullet2 = (GameObject)Instantiate(bulletPrefab2);
+                newBullet2.transform.position = bulletSpawnTransform.position;
+                PlayerBulletController2 bullCon2 = newBullet2.GetComponent<PlayerBulletController2>();
+                bullCon2.playerObject = gameObject;
+                bullCon2.launchBullet();
+                onStateChange(currentState);
+                break;
         }
         previousState = currentState;
         currentState = newState;
@@ -178,6 +210,12 @@ PlayerStateController.playerStates.idle;
         // Comparar estat actual amb el candidat a nou estat.
         switch (currentState)
         {
+            case PlayerStateController.playerStates.firingWeapon:
+                returnVal = true;
+                break;
+            case PlayerStateController.playerStates.firingWeapon2:
+                returnVal = true;
+                break;
             case PlayerStateController.playerStates.idle:
                 // Des de idle es pot passar a qualsevol altre estat
                 returnVal = true;
@@ -194,12 +232,12 @@ PlayerStateController.playerStates.idle;
                 // Des de Jump només es pot passar a landing o a kill.
                 if (
                 newState == PlayerStateController.playerStates.landing
-                || newState == PlayerStateController.playerStates.kill
+                || newState == PlayerStateController.playerStates.kill || newState == PlayerStateController.playerStates.firingWeapon || newState == PlayerStateController.playerStates.firingWeapon2
                 )
                     returnVal = true;
                 else
                     returnVal = false;
-           if(newState == PlayerStateController.playerStates.landing||    newState == PlayerStateController.playerStates.kill)
+           if(newState == PlayerStateController.playerStates.landing||    newState == PlayerStateController.playerStates.kill || newState == PlayerStateController.playerStates.firingWeapon || newState == PlayerStateController.playerStates.firingWeapon2)
                     returnVal = true;
                 else returnVal = false;
                 break;
@@ -208,7 +246,7 @@ PlayerStateController.playerStates.idle;
                 if (
                 newState == PlayerStateController.playerStates.left
                 || newState == PlayerStateController.playerStates.right
-                || newState == PlayerStateController.playerStates.idle
+                || newState == PlayerStateController.playerStates.idle || newState == PlayerStateController.playerStates.firingWeapon || newState == PlayerStateController.playerStates.firingWeapon2
                 )
                     returnVal = true;
                 else
@@ -218,7 +256,7 @@ PlayerStateController.playerStates.idle;
                 // Des de falling només es pot passar a landing o a kill.
                 if (
                 newState == PlayerStateController.playerStates.landing
-                || newState == PlayerStateController.playerStates.kill
+                || newState == PlayerStateController.playerStates.kill || newState == PlayerStateController.playerStates.firingWeapon || newState == PlayerStateController.playerStates.firingWeapon2
                 )
                     returnVal = true;
                 else
@@ -239,6 +277,7 @@ PlayerStateController.playerStates.idle;
                     returnVal = false;
                 break;
         }
+
         return returnVal;
     }
     // Aquesta funció comprova si hi ha algun motiu que impedeixi passar al nou estat.
@@ -264,6 +303,12 @@ PlayerStateController.playerStates.idle;
                 break;
             case PlayerStateController.playerStates.resurrect:
                
+                break;
+            case PlayerStateController.playerStates.firingWeapon:
+                if(PlayerStateController.stateDelayTimer[(int)PlayerStateController.playerStates.firingWeapon] > Time.time) { returnVal = true; }
+                break;
+            case PlayerStateController.playerStates.firingWeapon2:
+                if (PlayerStateController.stateDelayTimer[(int)PlayerStateController.playerStates.firingWeapon2] > Time.time) { returnVal = true; }
                 break;
         }
         // Retornar True vol dir 'Abort'. Retornar False vol dir 'Continue'.
